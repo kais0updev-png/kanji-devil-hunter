@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🪚 漢字デビルハンター | チェンソーマン世界観</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/chainsaw-design.css">
+    <link rel="stylesheet" href="css/grade-filter.css">
+    <link rel="stylesheet" href="css/card-report.css">
+</head>
+<body>
+    
+    <!-- ローディング画面 -->
+    <div id="loadingScreen" class="csm-loading-screen">
+        <div class="csm-loading-content">
+            <div class="csm-loading-spinner">
+                <div class="csm-spinner"></div>
+            </div>
+            <h2 class="csm-loading-title">問題データ読み込み中...</h2>
+            <p class="csm-loading-text">Google Spreadsheetから最新データを取得しています</p>
+            <p class="csm-loading-hint">初回は数秒かかる場合があります</p>
+        </div>
+    </div>
+
+    <!-- エラー画面 -->
+    <div id="errorScreen" class="csm-error-screen hidden">
+        <div class="csm-error-content">
+            <div class="csm-error-icon">❌</div>
+            <h2 class="csm-error-title">データ読み込みエラー</h2>
+            <p id="errorMessage" class="csm-error-message">問題データの読み込みに失敗しました。</p>
+            <div class="csm-error-actions">
+                <button onclick="window.location.reload()" class="csm-btn-primary csm-error-btn">
+                    🔄 再読み込み
+                </button>
+                <button onclick="showErrorDetails()" class="csm-btn-secondary csm-error-btn">
+                    📋 詳細を表示
+                </button>
+            </div>
+            <div id="errorDetails" class="csm-error-details hidden">
+                <h3>エラー詳細:</h3>
+                <pre id="errorDetailsText"></pre>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ヘッダー -->
+    <header class="csm-header">
+        <div class="csm-logo">
+            <img src="images/logo.png" alt="漢字デビルハンター" class="csm-logo-img">
+        </div>
+        <nav class="csm-nav">
+            <a href="#" class="csm-nav-link active" onclick="showScreen('homeScreen'); return false;">HOME</a>
+            <a href="#" class="csm-nav-link" onclick="startCardsSession('all'); return false;">CARD</a>
+            <a href="#" class="csm-nav-link" onclick="showReviewFromNav(); return false;">REVIEW</a>
+            <a href="#" class="csm-nav-link admin-nav-link" onclick="showAdminScreen(); return false;">ADMIN</a>
+        </nav>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="csm-main">
+        
+        <!-- ホーム画面 -->
+        <div id="homeScreen" class="csm-container">
+            <!-- プログレス概要 -->
+            <div class="csm-progress-overview">
+                <div class="csm-progress-overview-content">
+                    <div class="csm-progress-title">
+                        <div class="csm-progress-title-left">
+                            <span>🎯</span>
+                            <span>デビル撃破進捗</span>
+                        </div>
+                        <div class="csm-progress-title-right">
+                            <span class="cleared-number" id="clearedCount">0</span>
+                            <span style="font-size: var(--text-lg);">/ <span id="totalCount">635</span> 体</span>
+                        </div>
+                    </div>
+                    
+                    <div class="csm-progress-bar-container">
+                        <div class="csm-progress-bar" id="overallProgressBar" style="width: 0%">
+                            <span class="csm-progress-bar-label" id="overallProgressLabel">0%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="csm-progress-detail">
+                        <div class="csm-progress-detail-item">
+                            <div class="csm-progress-detail-label">クリア済ステージ</div>
+                            <div class="csm-progress-detail-value" id="clearedStages">0 / 10</div>
+                        </div>
+                        <div class="csm-progress-detail-item" style="border-left-color: var(--color-pochita)">
+                            <div class="csm-progress-detail-label">現在のステージ</div>
+                            <div class="csm-progress-detail-value" id="currentStageDisplay">Stage 1</div>
+                        </div>
+                        <div class="csm-progress-detail-item" style="border-left-color: var(--color-correct)">
+                            <div class="csm-progress-detail-label">次のステージまで</div>
+                            <div class="csm-progress-detail-value" id="nextStageProgress">64体</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ステージセレクト -->
+            <div class="csm-stage-grid">
+                <!-- Stage 1: ポチタ/デンジ -->
+                <div class="csm-stage-card pochita" onclick="selectStage(1)">
+                    <div class="csm-stage-card-status">✅</div>
+                    <div class="csm-stage-card-content">
+                        <div class="csm-stage-card-icon">
+                            <img src="images/characters/pochita_badge.png" alt="ポチタ" class="character-img" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+                            <div class="character-placeholder pochita-char" style="display:none;">🐕</div>
+                        </div>
+                        <div>
+                            <h3 class="csm-stage-card-title">STAGE 1: ポチタ</h3>
+                            <p class="csm-stage-card-progress" id="progress-1">0 / 64 体</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stage 2: マキマ -->
+                <div class="csm-stage-card makima" onclick="selectStage(2)">
+                    <div class="csm-stage-card-status">🔒</div>
+                    <div class="csm-stage-card-content">
+                        <div class="csm-stage-card-icon">
+                            <img src="images/characters/makima.png" alt="マキマ" class="character-img" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+                            <div class="character-placeholder makima-char" style="display:none;">👁️</div>
+                        </div>
+                        <div>
+                            <h3 class="csm-stage-card-title">STAGE 2: マキマ</h3>
+                            <p class="csm-stage-card-progress" id="progress-2">0 / 64 体</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stage 3: アキ -->
+                <div class="csm-stage-card aki" onclick="selectStage(3)">
+                    <div class="csm-stage-card-status">🔒</div>
+                    <div class="csm-stage-card-content">
+                        <div class="csm-stage-card-icon">
+                            <img src="images/characters/aki.png" alt="アキ" class="character-img" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+                            <div class="character-placeholder aki-char" style="display:none;">🗡️</div>
+                        </div>
+                        <div>
+                            <h3 class="csm-stage-card-title">STAGE 3: アキ</h3>
+                            <p class="csm-stage-card-progress" id="progress-3">0 / 64 体</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stage 4: パワー -->
+                <div class="csm-stage-card power" onclick="selectStage(4)">
+                    <div class="csm-stage-card-status">🔒</div>
+                    <div class="csm-stage-card-content">
+                        <div class="csm-stage-card-icon">
+                            <img src="images/characters/power.png" alt="パワー" class="character-img" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+                            <div class="character-placeholder power-char" style="display:none;">🩸</div>
+                        </div>
+                        <div>
+                            <h3 class="csm-stage-card-title">STAGE 4: パワー</h3>
+                            <p class="csm-stage-card-progress" id="progress-4">0 / 64 体</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stage 5: 姫野 -->
+                <div class="csm-stage-card himeno" onclick="selectStage(5)">
+                    <div class="csm-stage-card-status">🔒</div>
+                    <div class="csm-stage-card-content">
+                        <div class="csm-stage-card-icon">
+                            <img src="images/characters/himeno.png" alt="姫野" class="character-img" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+                            <div class="character-placeholder himeno-char" style="display:none;">👻</div>
+                        </div>
+                        <div>
+                            <h3 class="csm-stage-card-title">STAGE 5: 姫野</h3>
+                            <p class="csm-stage-card-progress" id="progress-5">0 / 64 体</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stage 6: コベニ -->
+                <div class="csm-stage-card kobeni" onclick="selectStage(6)">
+                    <div class="csm-stage-card-status">🔒</div>
+                    <div class="csm-stage-card-content">
+                        <div class="csm-stage-card-icon">
+                            <img src="images/characters/kobeni.png" alt="コベニ" class="character-img" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+                            <div class="character-placeholder kobeni-char" style="display:none;">😰</div>
+                        </div>
+                        <div>
+                            <h3 class="csm-stage-card-title">STAGE 6: コベニ</h3>
+                            <p class="csm-stage-card-progress" id="progress-6">0 / 64 体</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stage 7: レゼ -->
+                <div class="csm-stage-card reze" onclick="selectStage(7)">
+                    <div class="csm-stage-card-status">🔒</div>
+                    <div class="csm-stage-card-content">
+                        <div class="csm-stage-card-icon">
+                            <img src="images/characters/reze.png" alt="レゼ" class="character-img" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+                            <div class="character-placeholder reze-char" style="display:none;">💣</div>
+                        </div>
+                        <div>
+                            <h3 class="csm-stage-card-title">STAGE 7: レゼ</h3>
+                            <p class="csm-stage-card-progress" id="progress-7">0 / 64 体</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stage 8: ビーム -->
+                <div class="csm-stage-card beam" onclick="selectStage(8)">
+                    <div class="csm-stage-card-status">🔒</div>
+                    <div class="csm-stage-card-content">
+                        <div class="csm-stage-card-icon">
+                            <img src="images/characters/beam.png" alt="ビーム" class="character-img" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+                            <div class="character-placeholder beam-char" style="display:none;">🦈</div>
+                        </div>
+                        <div>
+                            <h3 class="csm-stage-card-title">STAGE 8: ビーム</h3>
+                            <p class="csm-stage-card-progress" id="progress-8">0 / 64 体</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stage 9: 岸辺 -->
+                <div class="csm-stage-card kishibe" onclick="selectStage(9)">
+                    <div class="csm-stage-card-status">🔒</div>
+                    <div class="csm-stage-card-content">
+                        <div class="csm-stage-card-icon">
+                            <img src="images/characters/kishibe.png" alt="岸辺" class="character-img" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+                            <div class="character-placeholder kishibe-char" style="display:none;">🥃</div>
+                        </div>
+                        <div>
+                            <h3 class="csm-stage-card-title">STAGE 9: 岸辺</h3>
+                            <p class="csm-stage-card-progress" id="progress-9">0 / 63 体</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stage 10: チェンソーマン -->
+                <div class="csm-stage-card chainsaw" onclick="selectStage(10)">
+                    <div class="csm-stage-card-status">🔒</div>
+                    <div class="csm-stage-card-content">
+                        <div class="csm-stage-card-icon">
+                            <img src="images/characters/chainsaw.png" alt="チェンソーマン" class="character-img" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+                            <div class="character-placeholder chainsaw-char" style="display:none;">🪚</div>
+                        </div>
+                        <div>
+                            <h3 class="csm-stage-card-title">FINAL: チェンソーマン</h3>
+                            <p class="csm-stage-card-progress" id="progress-10">0 / 64 体</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 学習画面 -->
+        <div id="quizScreen" class="csm-quiz-screen hidden">
+            <!-- 固定ステータスバー -->
+            <div class="csm-learning-header">
+                <div class="csm-learning-progress">
+                    <div class="csm-stage-info">
+                        <span class="csm-stage-badge stage-1" id="stageBadge">STAGE 1: ポチタ</span>
+                        <span class="csm-progress-numbers">
+                            <span class="current" id="currentProgress">0</span> / <span id="totalProgress">64</span> 体撃破
+                        </span>
+                        <span class="csm-remaining-count" id="remainingCount">(残り64問)</span>
+                    </div>
+                    <div class="csm-mini-progress-container">
+                        <div class="csm-mini-progress-bar">
+                            <div class="csm-mini-progress-fill medium" id="miniProgressFill" style="width: 0%"></div>
+                        </div>
+                        <div class="csm-progress-percentage" id="progressPercentage">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- プログレスバー（既存・下に移動） -->
+            <div class="csm-quiz-progress">
+                <div class="csm-quiz-progress-bar" id="quizProgressBar" style="width: 0%"></div>
+            </div>
+
+            <!-- 漢字表示 -->
+            <div class="csm-kanji-display">
+                <div class="csm-kanji-char" id="kanjiChar">森</div>
+                <div class="csm-kanji-reading" id="kanjiReading"></div>
+            </div>
+
+            <!-- 質問 -->
+            <p class="csm-question-text" id="questionText">この漢字の読み方は？</p>
+
+            <!-- 選択肢 -->
+            <div class="csm-choices-grid" id="choicesContainer">
+                <!-- JavaScriptで動的生成 -->
+            </div>
+
+            <!-- 問題報告チェックボックス（管理者用・目立たない） -->
+            <div class="admin-report-container">
+                <label class="admin-report-label">
+                    <input
+                        type="checkbox"
+                        id="questionReportCheckbox"
+                        class="admin-report-checkbox"
+                    />
+                    <span class="admin-report-text">この問題、なんか変です</span>
+                </label>
+            </div>
+
+            <!-- アクションボタン -->
+            <div class="csm-action-buttons">
+                <button class="csm-btn-secondary" onclick="skipQuestion()">スキップ</button>
+                <button class="csm-btn-primary hidden" id="nextButton" onclick="nextQuestion()">次へ</button>
+            </div>
+        </div>
+
+        <!-- 結果画面 -->
+        <div id="resultScreen" class="csm-result-screen hidden">
+            <h2 class="csm-result-title">🎯 ステージクリア！</h2>
+            
+            <div class="csm-result-stats">
+                <div class="csm-result-percentage" id="resultPercentage">85%</div>
+                
+                <div class="csm-result-breakdown">
+                    <div class="csm-result-item">
+                        <div class="csm-result-item-value" id="correctCount">0</div>
+                        <div class="csm-result-item-label">正解</div>
+                    </div>
+                    <div class="csm-result-item">
+                        <div class="csm-result-item-value" id="incorrectCount">0</div>
+                        <div class="csm-result-item-label">不正解</div>
+                    </div>
+                    <div class="csm-result-item">
+                        <div class="csm-result-item-value" id="skippedCount">0</div>
+                        <div class="csm-result-item-label">スキップ</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 間違い一覧 -->
+            <div id="wrongListContainer" class="hidden">
+                <h3 style="color: var(--color-blood-red); margin-bottom: var(--space-3); font-size: var(--text-xl);">復習が必要な漢字</h3>
+                <div class="csm-wrong-list" id="wrongList">
+                    <!-- JavaScriptで動的生成 -->
+                </div>
+            </div>
+
+            <!-- ボタン -->
+            <div class="csm-action-buttons mt-4">
+                <button class="csm-btn-secondary" onclick="goHome()">🏠 ホームへ</button>
+                <button class="csm-btn-secondary" onclick="restartQuiz()">🔄 もう一度</button>
+                <button class="csm-btn-primary hidden" id="reviewButton" onclick="startReviewMode()">📝 復習モード</button>
+            </div>
+        </div>
+
+        <!-- 管理者画面（問題報告一覧） -->
+        <div id="adminScreen" class="csm-admin-screen hidden">
+            <div class="admin-header">
+                <h2 class="admin-title">🔧 管理者画面 - 問題報告</h2>
+                <button class="csm-btn-secondary" onclick="goHome()">🏠 ホームへ</button>
+            </div>
+
+            <div class="admin-stats">
+                <p class="admin-stats-text">
+                    報告件数: <strong id="adminReportCount">0</strong>件
+                </p>
+            </div>
+
+            <!-- ステージアンロック制御セクション -->
+            <div class="admin-unlock-section">
+                <h3 class="admin-section-title">🔐 ステージアンロック制御</h3>
+                
+                <!-- 現在の状態表示 -->
+                <div class="admin-unlock-status" id="unlockStatus">
+                    <div class="unlock-status-content">
+                        <span class="unlock-status-label">現在の状態:</span>
+                        <div class="unlock-status-value">
+                            <span id="unlockStatusText" class="unlock-status-text">🔒 通常モード</span>
+                            <span id="unlockStatusBadge" class="unlock-status-badge">順次解放</span>
+                        </div>
+                    </div>
+                    <div class="unlock-status-desc" id="unlockStatusDesc">
+                        通常モードです。前のステージをクリアすると次のステージが解放されます。
+                    </div>
+                </div>
+                
+                <!-- ボタンエリア -->
+                <div class="admin-unlock-buttons">
+                    <button 
+                        class="admin-unlock-btn unlock-btn" 
+                        id="unlockAllBtn" 
+                        onclick="handleUnlockAll()"
+                    >
+                        <div class="unlock-btn-content">
+                            <span class="unlock-btn-icon">🔓</span>
+                            <span class="unlock-btn-text">全ステージアンロック</span>
+                        </div>
+                        <div class="unlock-btn-sub">すべて開放</div>
+                    </button>
+                    
+                    <button 
+                        class="admin-unlock-btn lock-btn" 
+                        id="lockAllBtn" 
+                        onclick="handleLockAll()"
+                    >
+                        <div class="unlock-btn-content">
+                            <span class="unlock-btn-icon">🔒</span>
+                            <span class="unlock-btn-text">通常モードに戻す</span>
+                        </div>
+                        <div class="unlock-btn-sub">順次解放に戻す</div>
+                    </button>
+                </div>
+                
+                <!-- 注意事項 -->
+                <div class="admin-unlock-notice">
+                    <p>⚠️ <strong>注意:</strong> この機能はテスト・デバッグ用です。アンロック状態はブラウザのLocalStorageに保存されます。</p>
+                </div>
+            </div>
+
+            <div class="admin-actions">
+                <button class="admin-btn admin-btn-primary" id="refreshQuestionsBtn" onclick="handleRefreshQuestions()">
+                    🔄 問題データ更新
+                </button>
+                <button class="admin-btn" id="exportCSVBtn" onclick="exportReportsCSV()">
+                    📊 CSV出力（問題）
+                </button>
+                <button class="admin-btn" id="exportCardCSVBtn" onclick="exportCardReportsCSV()">
+                    📊 CSV出力（カード）
+                </button>
+                <button class="admin-btn admin-btn-danger" id="clearAllBtn" onclick="confirmClearAllReports()">
+                    🗑️ 全削除
+                </button>
+                <button class="admin-btn admin-btn-warning" id="resetStatusBtn" onclick="handleResetStatus()">
+                    ⚠️ ステータスリセット
+                </button>
+                <label class="admin-sort-label">
+                    ソート:
+                    <select id="sortBySelect" class="admin-sort-select" onchange="renderReportsList()">
+                        <option value="date">報告日時順</option>
+                        <option value="stage">ステージ順</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="reports-list-container">
+                <div id="noReportsMessage" class="no-reports hidden">
+                    <p>報告データがありません</p>
+                    <p class="no-reports-hint">学習画面で「この問題、なんか変です」をチェックすると、ここに表示されます。</p>
+                </div>
+                
+                <div id="reportsTableContainer" class="hidden">
+                    <table class="reports-table">
+                        <thead>
+                            <tr>
+                                <th>報告日時</th>
+                                <th>問題ID</th>
+                                <th>Stage</th>
+                                <th>漢字</th>
+                                <th>タイプ</th>
+                                <th>問題文</th>
+                                <th>正解</th>
+                                <th>ユーザー回答</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportsTableBody">
+                            <!-- JavaScriptで動的生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- カード学習画面 -->
+        <div id="cardsScreen" class="csm-container hidden">
+            <div class="cards-container">
+                <!-- 級フィルターボタン -->
+                <div class="grade-filter-buttons">
+                    <button class="grade-filter-btn active" data-grade="all" onclick="filterCardsByGrade('all')">全て</button>
+                    <button class="grade-filter-btn" data-grade="10" onclick="filterCardsByGrade('10')">10級</button>
+                    <button class="grade-filter-btn" data-grade="9" onclick="filterCardsByGrade('9')">9級</button>
+                    <button class="grade-filter-btn" data-grade="8" onclick="filterCardsByGrade('8')">8級</button>
+                    <button class="grade-filter-btn" data-grade="7" onclick="filterCardsByGrade('7')">7級</button>
+                </div>
+                
+                <div class="cards-progress" id="cardProgress">1 / 200</div>
+                
+                <div class="card-wrapper">
+                    <div class="card-3d" id="cardInner">
+                        <div class="card-face card-front">
+                            <div class="card-grade" id="cardGradeFront">10級</div>
+                            <div class="card-content-vertical" id="cardFront">学校に□く</div>
+                            <div class="card-decoration">⚔</div>
+                        </div>
+                        <div class="card-face card-back">
+                            <div class="card-grade" id="cardGradeBack">10級</div>
+                            <div class="card-content-vertical" id="cardBack">学校に行く</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="cards-buttons">
+                    <button id="showAnswerBtn" class="csm-card-btn csm-card-btn-primary" onclick="flipTheCard()">
+                        正解を見る
+                    </button>
+                    <div id="cardChoiceButtons" class="card-choice-buttons" style="display:none;">
+                        <p class="card-choice-label">覚えましたか？</p>
+                        <div class="card-choice-grid-unified">
+                            <button class="csm-card-btn csm-card-btn-danger" onclick="markCardNotRemembered()">覚えてない</button>
+                            <button class="csm-card-btn csm-card-btn-success" onclick="markCardRemembered()">覚えた！</button>
+                        </div>
+                        <button class="csm-card-btn csm-card-btn-info" onclick="goToNextCard()">次へ →</button>
+                        <button class="csm-card-btn csm-card-btn-secondary" onclick="goToPreviousCard()">← 戻る</button>
+                    </div>
+                </div>
+                
+                <!-- 問題報告チェックボックス -->
+                <div class="report-issue-container">
+                    <label class="report-issue-checkbox">
+                        <input 
+                          type="checkbox" 
+                          id="card-report-checkbox"
+                          onchange="handleCardReportToggle()"
+                        >
+                        <span class="report-issue-text">この問題、なんか変です</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- カード完了画面 -->
+        <div id="cardsCompleteScreen" class="csm-container hidden">
+            <div class="complete-container">
+                <h2 class="complete-title">🎉 セッション完了！</h2>
+                <div class="complete-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">学習済み:</span>
+                        <span class="stat-value" id="cardsStudiedCount">0</span>枚
+                    </div>
+                    <div class="stat-item stat-success">
+                        <span class="stat-label">覚えた:</span>
+                        <span class="stat-value" id="cardsRememberedCount">0</span>枚
+                    </div>
+                    <div class="stat-item stat-danger">
+                        <span class="stat-label">復習が必要:</span>
+                        <span class="stat-value" id="cardsReviewCount">0</span>枚
+                    </div>
+                </div>
+                <div class="complete-buttons">
+                    <button id="startReviewBtn" class="csm-btn-danger" onclick="startCardsSession('review')">復習する</button>
+                    <button class="csm-btn-primary" onclick="startCardsSession('all')">最初からやり直す</button>
+                    <button class="csm-btn-secondary" onclick="showScreen('homeScreen')">ホームへ</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- JavaScript -->
+    <script src="js/kanji_full_data.js"></script>
+    <script src="js/csv-loader-unified.js"></script>
+    <script src="js/chainsaw-app.js"></script>
+    
+    <!-- Startup Diagnostic: Log all loaded scripts -->
+    <script>
+      console.log('🔧 === SCRIPT LOAD DIAGNOSTIC ===');
+      const scripts = document.querySelectorAll('script[src]');
+      scripts.forEach((script, idx) => {
+        console.log(`📜 Script ${idx + 1}: ${script.src}`);
+      });
+      console.log(`✅ Total scripts loaded: ${scripts.length}`);
+      console.log('🔧 === END DIAGNOSTIC ===');
+    </script>
+</body>
+</html>
